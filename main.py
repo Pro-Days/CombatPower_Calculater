@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import requests
+import webbrowser
 import urllib.request
 from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtGui import QIcon, QPixmap
@@ -21,13 +22,47 @@ class MainWindow(QtWidgets.QMainWindow, form_class):
         super().__init__()
         self.setupUi(self)
         self.resize(1280, 720)
-        self.setWindowTitle("데이즈 한월RPG 전투력 계산기 v1.0.0")
+        self.setWindowTitle("데이즈 한월RPG 전투력 계산기 " + version)
         self.setWindowIcon(QIcon(resource_path("resource//icon.png")))
         self.add_stuff()
         self.dataload()
         self.setting()
         self.calc()
         self.load_job()
+        self.version_check()
+
+    def version_check(self):
+        try:
+            response = requests.get(
+                "https://api.github.com/repos/pro-days/CombatPower_Calculater/releases/latest"
+            )
+            checked_version = response.json()["name"]
+            if response.status_code == 200:
+                if version == checked_version:
+                    self.button_update.setStyleSheet(
+                        'background-color: rgb(80, 150, 80); font: 18pt "맑은 고딕";'
+                    )
+                    self.button_update.setText("최신버전 O")
+                else:
+                    update_url = response.json()["html_url"]
+                    self.button_update.clicked.disconnect()
+                    self.button_update.clicked.connect(
+                        lambda: webbrowser.open_new(update_url)
+                    )
+                    self.button_update.setText("최신버전 X")
+                    self.button_update.setStyleSheet(
+                        'background-color: rgb(255, 100, 100); font: 18pt "맑은 고딕";'
+                    )
+            else:
+                self.button_update.setText("업데이트 확인 실패")
+                self.button_update.setStyleSheet(
+                    'background-color: rgb(255, 100, 100); font: 18pt "맑은 고딕";'
+                )
+        except:
+            self.button_update.setText("업데이트 확인 실패")
+            self.button_update.setStyleSheet(
+                'background-color: rgb(255, 100, 100); font: 18pt "맑은 고딕";'
+            )
 
     def add_stuff(self):  # 초기세팅
         self.resize(1280, 720)
@@ -96,6 +131,11 @@ class MainWindow(QtWidgets.QMainWindow, form_class):
         self.button_save.clicked.connect(self.datasave)
         self.button_capture_load.clicked.connect(self.image)
         self.button_capture_save.clicked.connect(self.capture)
+        self.button_update.clicked.connect(
+            lambda: webbrowser.open_new(
+                "https://github.com/Pro-Days/CombatPower_Calculater#readme"
+            )
+        )
 
     def load_job(self):
         self.JOB = self.combobox_job.currentIndex()
@@ -1901,8 +1941,7 @@ class MainWindow(QtWidgets.QMainWindow, form_class):
 
 # 정렬은 이동이 아니라 텍스트수정으로
 if __name__ == "__main__":
-    version = "v1.6.0"
-    # window.title("데이즈 환산스펙 계산기 " + version)
+    version = "v1.0.1"
     file = "C:\\ProDays\\PDCVSpec.json"
     app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
